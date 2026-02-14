@@ -2,7 +2,7 @@
 from pwn import *
 import os
 
-DEBUG = True # toggles gdb.debug or process
+DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level04') # replace this with the actual level
 get_a_shell = p32(elf.symbols["get_a_shell"])
 

