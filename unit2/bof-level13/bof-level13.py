@@ -1,18 +1,8 @@
-# SETUP BOILERPLATE
 from pwn import *
 import os
 
 DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level13') # replace this with the actual level
-
-# crash the process to get a core file and find the buffer address (still boilerplate)
-
-# io = elf.process(env={}, setuid=False)
-# io.sendline(b'>,' * 0x200 + cyclic(0x200)) # send 1000 junk characters
-# io.wait()
-# core = io.corefile
-# buffer_address = core.stack.find(cyclic(50))
-# os.unlink(core.path) # delete the file now that we're done with it
 
 # launch the main process (still boilerplate)
 if DEBUG:

