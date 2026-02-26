@@ -1,14 +1,27 @@
 from pwn import *
 import os
 
-DEBUG = False # toggles gdb.debug or process
-elf = ELF('./bof-level00') # replace this with the actual level
+DEBUG = True 
+elf = ELF('') 
+
+# crash the process to get a core file and find the buffer address (still boilerplate)
+
+io = elf.process(env={}, setuid=False)
+io.sendline(cyclic(10000)) 
+io.wait()
+core = io.corefile
+buffer_address = core.stack.find(cyclic(50))
+os.unlink(core.path) 
 
 # launch the main process (still boilerplate)
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = elf.debug(env={})
+    io = elf.debug(env={}, gdbscript='''
+b main
+continue
+''')
+
 else:
     io = elf.process(env={})
 
@@ -17,7 +30,7 @@ else:
 # BEGIN CHALLENGE-SPECIFIC CODE
 
 payload = b""
-io.sendline(payload)
+io.send(payload)
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
