@@ -2,11 +2,11 @@ from pwn import *
 import os
 
 DEBUG = True 
-elf = ELF('') 
+file = "./stack-ovfl-where-32"
 
 # crash the process to get a core file and find the buffer address (still boilerplate)
 
-io = elf.process(env={}, setuid=False)
+io = process(file, env={}, setuid=False)
 io.sendline(cyclic(10000)) 
 io.wait()
 core = io.corefile
@@ -17,13 +17,13 @@ os.unlink(core.path)
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = elf.debug(env={}, gdbscript='''
+    io = gdb.debug(file, env={}, gdbscript='''
 b main
 continue
 ''')
 
 else:
-    io = elf.process(env={})
+    io = process(file, env={})
 
 
 # END SETUP BOILERPLATE
