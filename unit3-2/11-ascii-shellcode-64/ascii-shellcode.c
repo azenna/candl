@@ -1,1 +1,0 @@
-/home/labs/unit3-2/11-ascii-shellcode-64/ascii-shellcode.c

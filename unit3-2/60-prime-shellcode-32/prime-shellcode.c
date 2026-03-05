@@ -1,1 +1,0 @@
-/home/labs/unit3-2/60-prime-shellcode-32/prime-shellcode.c

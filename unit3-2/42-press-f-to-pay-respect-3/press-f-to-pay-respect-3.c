@@ -1,1 +1,0 @@
-/home/labs/unit3-2/42-press-f-to-pay-respect-3/press-f-to-pay-respect-3.c
