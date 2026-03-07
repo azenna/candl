@@ -62,9 +62,8 @@ if DEBUG:
 ''')
 else:
     io = process(file, env=env)
-io.interactive()
 
-# import re
-# io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
-# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-# print(flag)
+import re
+io.sendlineafter(b'Paying respect', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)

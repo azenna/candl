@@ -71,4 +71,7 @@ continue
 else:
     io = process(file, env=env)
 
-io.interactive()
+import re
+io.sendlineafter(b'Reading', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)

