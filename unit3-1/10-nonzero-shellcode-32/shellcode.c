@@ -1,1 +1,0 @@
-/home/labs/unit3-1/10-nonzero-shellcode-32/shellcode.c

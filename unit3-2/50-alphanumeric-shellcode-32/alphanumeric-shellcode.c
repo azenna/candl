@@ -1,1 +1,0 @@
-/home/labs/unit3-2/50-alphanumeric-shellcode-32/alphanumeric-shellcode.c
